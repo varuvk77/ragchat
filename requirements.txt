@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 streamlit
 langchain
 langchain-community
@@ -11,3 +12,29 @@ pypdf
 python-docx
 docx2txt
 unstructured
+=======
+streamlit==1.45.1
+
+langchain==0.3.26
+langchain-community==0.3.27
+langchain-core==0.3.69
+langchain-text-splitters==0.3.8
+langchain-chroma==0.2.5
+langchain-ollama==0.3.6
+
+chromadb==1.0.15
+
+ollama==0.5.1
+
+pypdf==5.8.0
+python-docx==1.2.0
+docx2txt==0.9
+
+unstructured==0.18.5
+
+pandas==2.3.1
+numpy==2.3.2
+
+sentence-transformers==5.0.0
+protobuf>=5.0
+>>>>>>> 8efa79d (Update RAG chat app and ignore generated files)

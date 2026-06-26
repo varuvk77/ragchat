@@ -1,9 +1,13 @@
 import os
 import streamlit as st
-from ingest import ingest_pdf
-from rag import llm, embeddings
 from langchain_chroma import Chroma
 
+from ingest import ingest_pdf
+from rag import llm, embeddings
+
+# -----------------------------
+# Streamlit Page Configuration
+# -----------------------------
 st.set_page_config(
     page_title="RAG Chat App",
     page_icon="🤖",
@@ -12,6 +16,10 @@ st.set_page_config(
 
 st.title("🤖 Streamlit RAG Chat App")
 
+# Create uploads folder if it doesn't exist
+os.makedirs("uploads", exist_ok=True)
+
+# Upload PDF
 uploaded_file = st.file_uploader(
     "Upload your PDF",
     type=["pdf"]
@@ -31,6 +39,7 @@ if uploaded_file:
 
     st.success("✅ PDF indexed successfully!")
 
+    # Load Chroma database
     db = Chroma(
         persist_directory="chroma_db",
         embedding_function=embeddings
@@ -38,6 +47,7 @@ if uploaded_file:
 
     retriever = db.as_retriever(search_kwargs={"k": 3})
 
+    # Chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
@@ -45,6 +55,7 @@ if uploaded_file:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+    # Chat input
     question = st.chat_input("Ask a question about your PDF")
 
     if question:
@@ -56,34 +67,20 @@ if uploaded_file:
         with st.chat_message("user"):
             st.markdown(question)
 
+        # Retrieve relevant chunks
         docs = retriever.invoke(question)
 
-st.write("Retrieved documents:", len(docs))
+        context = "\n\n".join(
+            doc.page_content for doc in docs
+        )
 
-context = "\n\n".join(
-    doc.page_content for doc in docs
-)
-
-prompt = f"""
-You are a helpful AI assistant.
-
-Answer ONLY using the context below.
-
-Context:
-{context}
-
-Question:
-{question}
-"""
-
-st.text_area("Prompt sent to LLM", prompt, height=300)
-
-response = llm.invoke(prompt)
+        prompt = f"""
 You are a helpful AI assistant.
 
 Answer ONLY using the context below.
 
 If the answer is not available in the context, reply:
+
 'I couldn't find that information in the uploaded document.'
 
 Context:
@@ -94,14 +91,15 @@ Question:
 """
 
         try:
-    response = st.write("Retrieved Documents:", len(docs))
+            response = llm.invoke(prompt)
 
-for i, doc in enumerate(docs):
-    st.write(f"Document {i+1}")
-    st.write(doc.page_content[:300])llm.invoke(prompt)
-    answer = response.content
-except Exception as e:
-    answer = f"Error: {e}"
+            if hasattr(response, "content"):
+                answer = response.content
+            else:
+                answer = str(response)
+
+        except Exception as e:
+            answer = f"Error: {e}"
 
         with st.chat_message("assistant"):
             st.markdown(answer)
